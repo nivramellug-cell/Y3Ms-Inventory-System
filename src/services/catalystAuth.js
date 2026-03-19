@@ -49,11 +49,27 @@ export async function authenticateWithDatastore(username, password, tableName = 
   let nextToken
 
   while (hasNext) {
-    const response = await table.getPagedRows({
-      next_token: nextToken,
-      max_rows: 200
-    })
-    const rows = response?.content ?? []
+    let response
+
+    try {
+      response = await table.getPagedRows({
+        next_token: nextToken,
+        max_rows: 200
+      })
+    } catch (err) {
+      const errMessage = String(err?.message || err || '')
+      const statusCode = Number(err?.status || err?.statusCode || 0)
+
+      if (statusCode === 401 || errMessage.toLowerCase().includes('unauthorized')) {
+        throw new Error(
+          'Unauthorized Data Store request. Browser-side Data Store calls require Catalyst auth.'
+        )
+      }
+
+      throw err
+    }
+
+    const rows = Array.isArray(response?.content) ? response.content : []
     const matchedUser = rows.find((row) => {
       const rowUsername = String(row?.username || '').trim().toLowerCase()
       const rowPassword = String(row?.password || '').trim()
