@@ -1,18 +1,30 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { computed } from 'vue'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { signOutCurrentUser } from './services/catalystAuth'
+
+const route = useRoute()
+const router = useRouter()
+const isLoginPage = computed(() => route.name === 'login')
+
+async function logout() {
+  await signOutCurrentUser()
+  router.push('/login')
+}
 </script>
 
 <template>
-  <header>
+  <header v-if="!isLoginPage">
     <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
     <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+      <h1>Y3MS Inventory System</h1>
 
       <nav>
         <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/add-user">Add User</RouterLink>
         <RouterLink to="/about">About</RouterLink>
+        <button class="logout" @click="logout">Logout</button>
       </nav>
     </div>
   </header>
@@ -54,6 +66,11 @@ nav a {
 
 nav a:first-of-type {
   border: 0;
+}
+
+.logout {
+  margin-left: 1rem;
+  padding: 0.3rem 0.6rem;
 }
 
 @media (min-width: 1024px) {
