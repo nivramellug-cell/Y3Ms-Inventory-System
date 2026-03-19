@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 const tableName = ref('Users')
-const rowId = ref('')
+const username = ref('')
 const loading = ref(false)
 const error = ref('')
 const userRow = ref(null)
@@ -11,8 +11,8 @@ async function fetchUser() {
   error.value = ''
   userRow.value = null
 
-  if (!rowId.value.trim()) {
-    error.value = 'Enter a row ID first.'
+  if (!username.value.trim()) {
+    error.value = 'Enter a username first.'
     return
   }
 
@@ -27,12 +27,31 @@ async function fetchUser() {
   loading.value = true
 
   try {
-    const datastore = catalyst.table
-    const table = datastore.tableId(tableName.value)
-    const row = table.rowId(rowId.value.trim())
-    const response = await row.get()
+    const table = catalyst.table.tableId(tableName.value)
+    let hasNext = true
+    let nextToken
+    const targetUsername = username.value.trim().toLowerCase()
 
-    userRow.value = response?.content ?? null
+    while (hasNext) {
+      const response = await table.getPagedRows({
+        next_token: nextToken,
+        max_rows: 200
+      })
+      const rows = response?.content ?? []
+      const found = rows.find(
+        (row) => String(row?.username || '').trim().toLowerCase() === targetUsername
+      )
+
+      if (found) {
+        userRow.value = found
+        return
+      }
+
+      hasNext = Boolean(response?.more_records)
+      nextToken = response?.next_token
+    }
+
+    error.value = 'No user found with that username.'
   } catch (err) {
     error.value = err?.message || String(err)
   } finally {
@@ -44,7 +63,7 @@ async function fetchUser() {
 <template>
   <main class="home">
     <h2>Catalyst Data Store Example</h2>
-    <p>Fetch one user row by row ID.</p>
+    <p>Fetch one user row by username.</p>
 
     <div class="controls">
       <label>
@@ -53,8 +72,8 @@ async function fetchUser() {
       </label>
 
       <label>
-        User Row ID
-        <input v-model="rowId" type="text" placeholder="e.g. 2136000000011011" />
+        Username
+        <input v-model="username" type="text" placeholder="e.g. john.doe" />
       </label>
 
       <button :disabled="loading" @click="fetchUser">

@@ -2,88 +2,73 @@ export function getCatalyst() {
   return window.catalyst
 }
 
-export async function isAuthenticated() {
-  const catalyst = getCatalyst()
+const SESSION_KEY = 'y3ms_logged_user'
 
-  if (!catalyst || !catalyst.auth) {
-    return false
+function saveSessionUser(user) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(user))
+}
+
+export function getSessionUser() {
+  const rawUser = localStorage.getItem(SESSION_KEY)
+
+  if (!rawUser) {
+    return null
   }
 
   try {
-    await catalyst.auth.isUserAuthenticated()
-    return true
+    return JSON.parse(rawUser)
   } catch {
-    return false
+    return null
   }
 }
 
-export async function getCurrentUser() {
-  const catalyst = getCatalyst()
-
-  if (!catalyst || !catalyst.auth) {
-    return null
-  }
-
-  try {
-    const response = await catalyst.auth.isUserAuthenticated()
-    return response?.content ?? null
-  } catch {
-    return null
-  }
+export async function isAuthenticated() {
+  return Boolean(getSessionUser())
 }
 
 export async function signOutCurrentUser() {
-  const catalyst = getCatalyst()
-
-  if (!catalyst?.auth?.signOut) {
-    return
-  }
-
-  const loginUrl = `${window.location.origin}/login`
-  catalyst.auth.signOut(loginUrl)
+  localStorage.removeItem(SESSION_KEY)
 }
 
-export async function isAuthorizedUser(tableName = 'Users') {
+export async function authenticateWithDatastore(username, password, tableName = 'Users') {
   const catalyst = getCatalyst()
 
   if (!catalyst?.table) {
-    return false
+    throw new Error('Catalyst Web SDK is not initialized. Open this app inside Catalyst hosting.')
   }
 
-  const currentUser = await getCurrentUser()
-  const userEmail = String(currentUser?.email_id || currentUser?.email || '').toLowerCase()
+  const cleanUsername = String(username || '').trim().toLowerCase()
+  const cleanPassword = String(password || '').trim()
 
-  if (!userEmail) {
-    return false
+  if (!cleanUsername || !cleanPassword) {
+    return null
   }
 
-  try {
-    const table = catalyst.table.tableId(tableName)
-    let hasNext = true
-    let nextToken
+  const table = catalyst.table.tableId(tableName)
+  let hasNext = true
+  let nextToken
 
-    while (hasNext) {
-      const response = await table.getPagedRows({
-        next_token: nextToken,
-        max_rows: 200
-      })
-      const rows = response?.content ?? []
-      const found = rows.some((row) => {
-        const rowEmail = String(row?.Email || row?.email || row?.email_id || '').toLowerCase()
-        return rowEmail === userEmail
-      })
+  while (hasNext) {
+    const response = await table.getPagedRows({
+      next_token: nextToken,
+      max_rows: 200
+    })
+    const rows = response?.content ?? []
+    const matchedUser = rows.find((row) => {
+      const rowUsername = String(row?.username || '').trim().toLowerCase()
+      const rowPassword = String(row?.password || '').trim()
+      return rowUsername === cleanUsername && rowPassword === cleanPassword
+    })
 
-      if (found) {
-        return true
-      }
-
-      hasNext = Boolean(response?.more_records)
-      nextToken = response?.next_token
+    if (matchedUser) {
+      saveSessionUser(matchedUser)
+      return matchedUser
     }
 
-    return false
-  } catch {
-    return false
+    hasNext = Boolean(response?.more_records)
+    nextToken = response?.next_token
   }
+
+  return null
 }
 

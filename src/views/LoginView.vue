@@ -1,47 +1,45 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getCatalyst, isAuthenticated, isAuthorizedUser, signOutCurrentUser } from '../services/catalystAuth'
+import { authenticateWithDatastore, isAuthenticated } from '../services/catalystAuth'
 
 const route = useRoute()
 const router = useRouter()
 const error = ref('')
+const username = ref('')
+const password = ref('')
+const loading = ref(false)
+
+async function login() {
+  error.value = ''
+  loading.value = true
+
+  try {
+    const user = await authenticateWithDatastore(username.value, password.value, 'Users')
+
+    if (!user) {
+      error.value = 'Invalid username or password.'
+      return
+    }
+
+    await router.replace('/')
+  } catch (err) {
+    error.value = err?.message || String(err)
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(async () => {
-  if (route.query.reason === 'not-registered') {
-    error.value = 'You are logged in but your user is not in the Users Data Store table.'
+  if (route.query.reason === 'auth') {
+    error.value = 'Login required to access this page.'
   }
 
   const alreadyLoggedIn = await isAuthenticated()
 
   if (alreadyLoggedIn) {
-    const allowed = await isAuthorizedUser('Users')
-
-    if (allowed) {
-      await router.replace('/')
-      return
-    }
-
-    await signOutCurrentUser()
-    error.value = 'Your account is not registered in the Users table. Contact an admin.'
+    await router.replace('/')
     return
-  }
-
-  const catalyst = getCatalyst()
-
-  if (!catalyst || !catalyst.auth) {
-    error.value = 'Catalyst Web SDK is not initialized. Open this app inside Catalyst hosting.'
-    return
-  }
-
-  try {
-    const config = {
-      service_url: `${window.location.origin}/`
-    }
-
-    catalyst.auth.signIn('loginDivElementId', config)
-  } catch (err) {
-    error.value = err?.message || String(err)
   }
 })
 </script>
@@ -50,10 +48,24 @@ onMounted(async () => {
   <main class="auth-page">
     <section class="auth-card">
       <h2>Login</h2>
-      <p>Sign in to continue to the inventory app.</p>
+      <p>Sign in with your Data Store user credentials.</p>
 
       <p v-if="error" class="error">{{ error }}</p>
-      <div id="loginDivElementId" class="login-box"></div>
+      <form class="login-box" @submit.prevent="login">
+        <label>
+          Username
+          <input v-model="username" type="text" autocomplete="username" />
+        </label>
+
+        <label>
+          Password
+          <input v-model="password" type="password" autocomplete="current-password" />
+        </label>
+
+        <button :disabled="loading" type="submit">
+          {{ loading ? 'Signing in...' : 'Sign In' }}
+        </button>
+      </form>
     </section>
   </main>
 </template>
@@ -78,10 +90,27 @@ onMounted(async () => {
 
 .login-box {
   margin-top: 1rem;
-  min-height: 420px;
+  display: grid;
+  gap: 0.75rem;
   border: 1px dashed var(--color-border);
   border-radius: 8px;
   padding: 0.75rem;
+}
+
+label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+input {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+button {
+  width: fit-content;
+  padding: 0.5rem 0.8rem;
 }
 </style>
 

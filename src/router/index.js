@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import { isAuthenticated, isAuthorizedUser } from '../services/catalystAuth'
+import { isAuthenticated } from '../services/catalystAuth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,12 +44,6 @@ router.beforeEach(async (to) => {
 
   if (!loggedIn) {
     return { name: 'login', query: { reason: 'auth' } }
-  }
-
-  const allowed = await isAuthorizedUser('Users')
-
-  if (!allowed) {
-    return { name: 'login', query: { reason: 'not-registered' } }
   }
 
   return true

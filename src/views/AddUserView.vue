@@ -3,8 +3,11 @@ import { ref } from 'vue'
 import { getCatalyst } from '../services/catalystAuth'
 
 const tableName = ref('Users')
-const name = ref('')
-const email = ref('')
+const firstname = ref('')
+const lastname = ref('')
+const username = ref('')
+const password = ref('')
+const role = ref('staff')
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
@@ -15,8 +18,8 @@ async function addUser() {
   success.value = ''
   createdRow.value = null
 
-  if (!name.value.trim() || !email.value.trim()) {
-    error.value = 'Name and Email are required.'
+  if (!firstname.value.trim() || !lastname.value.trim() || !username.value.trim() || !password.value.trim()) {
+    error.value = 'Firstname, lastname, username, and password are required.'
     return
   }
 
@@ -34,15 +37,21 @@ async function addUser() {
     const table = catalyst.table.tableId(tableName.value.trim())
     const rows = await table.addRow([
       {
-        Name: name.value.trim(),
-        Email: email.value.trim()
+        firstname: firstname.value.trim(),
+        lastname: lastname.value.trim(),
+        username: username.value.trim(),
+        password: password.value.trim(),
+        role: role.value.trim() || 'staff'
       }
     ])
 
     createdRow.value = rows?.content?.[0] ?? rows?.content ?? rows
     success.value = 'User added successfully.'
-    name.value = ''
-    email.value = ''
+    firstname.value = ''
+    lastname.value = ''
+    username.value = ''
+    password.value = ''
+    role.value = 'staff'
   } catch (err) {
     error.value = err?.message || String(err)
   } finally {
@@ -63,13 +72,28 @@ async function addUser() {
       </label>
 
       <label>
-        Name
-        <input v-model="name" type="text" />
+        Firstname
+        <input v-model="firstname" type="text" />
       </label>
 
       <label>
-        Email
-        <input v-model="email" type="email" />
+        Lastname
+        <input v-model="lastname" type="text" />
+      </label>
+
+      <label>
+        Username
+        <input v-model="username" type="text" autocomplete="username" />
+      </label>
+
+      <label>
+        Password
+        <input v-model="password" type="password" autocomplete="new-password" />
+      </label>
+
+      <label>
+        Role
+        <input v-model="role" type="text" placeholder="admin / staff" />
       </label>
 
       <button :disabled="loading" @click="addUser">
