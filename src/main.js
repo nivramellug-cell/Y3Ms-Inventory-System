@@ -24,7 +24,7 @@ async function ensureCatalystScripts() {
   }
 
   try {
-    await loadScript('https://static.zohocdn.com/catalyst/sdk/js/4.0.0/catalystWebSDK.js')
+    await loadScript('https://static.zohocdn.com/catalyst/sdk/js/4.5.0/catalystWebSDK.js')
     await loadScript('/__catalyst/sdk/init.js')
   } catch {
     // Keep app running and let login page show actionable error.

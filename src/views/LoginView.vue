@@ -35,9 +35,11 @@ onMounted(async () => {
   }
 
   try {
-    catalyst.auth.signIn('catalyst-login', {
+    const config = {
       service_url: `${window.location.origin}/`
-    })
+    }
+
+    catalyst.auth.signIn('loginDivElementId', config)
   } catch (err) {
     error.value = err?.message || String(err)
   }
@@ -45,20 +47,28 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="auth">
-    <h2>Login</h2>
-    <p>Sign in to continue to the inventory app.</p>
+  <main class="auth-page">
+    <section class="auth-card">
+      <h2>Login</h2>
+      <p>Sign in to continue to the inventory app.</p>
 
-    <p v-if="error" class="error">{{ error }}</p>
-    <div id="catalyst-login" class="login-box"></div>
+      <p v-if="error" class="error">{{ error }}</p>
+      <div id="loginDivElementId" class="login-box"></div>
+    </section>
   </main>
 </template>
 
 <style scoped>
-.auth {
-  max-width: 640px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+.auth-page {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.auth-card {
+  width: min(680px, 100%);
 }
 
 .error {
@@ -68,7 +78,7 @@ onMounted(async () => {
 
 .login-box {
   margin-top: 1rem;
-  min-height: 280px;
+  min-height: 420px;
   border: 1px dashed var(--color-border);
   border-radius: 8px;
   padding: 0.75rem;

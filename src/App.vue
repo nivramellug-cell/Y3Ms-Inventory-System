@@ -14,28 +14,33 @@ async function logout() {
 </script>
 
 <template>
-  <header v-if="!isLoginPage">
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <div class="app-shell">
+    <header v-if="!isLoginPage">
+      <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
-    <div class="wrapper">
-      <h1>Y3MS Inventory System</h1>
+      <div class="wrapper">
+        <h1>Y3MS Inventory System</h1>
 
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/add-user">Add User</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-        <button class="logout" @click="logout">Logout</button>
-      </nav>
-    </div>
-  </header>
+        <nav>
+          <RouterLink to="/">Home</RouterLink>
+          <RouterLink to="/add-user">Add User</RouterLink>
+          <RouterLink to="/about">About</RouterLink>
+          <button class="logout" @click="logout">Logout</button>
+        </nav>
+      </div>
+    </header>
 
-  <RouterView />
+    <RouterView />
+  </div>
 </template>
 
 <style scoped>
+.app-shell {
+  min-height: 100vh;
+}
+
 header {
   line-height: 1.5;
-  max-height: 100vh;
 }
 
 .logo {

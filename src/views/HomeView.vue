@@ -70,6 +70,8 @@ async function fetchUser() {
 
 <style scoped>
 .home {
+  min-height: 100vh;
+  width: 100%;
   max-width: 720px;
   margin: 2rem auto;
   padding: 0 1rem;
